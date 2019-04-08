@@ -546,7 +546,7 @@ class Zipper
     private function addDir($pathToDir)
     {
         // First go over the files in this directory and add them to the repository.
-        foreach ($this->file->files($pathToDir) as $file) {
+        foreach ($this->files($pathToDir) as $file) {
             $this->addFile($pathToDir.'/'.basename($file));
         }
 
@@ -623,5 +623,27 @@ class Zipper
         $toPath = $path.DIRECTORY_SEPARATOR.$tmpPath;
         $fileStream = $this->getRepository()->getFileStream($fileName);
         $this->getFileHandler()->put($toPath, $fileStream);
+    }
+
+    /**
+     * Get an array of all files in a directory.
+     *
+     * @param  string  $directory
+     * @return array
+     */
+    private function files($directory)
+    {
+        $glob = glob($directory.DIRECTORY_SEPARATOR.'{,.}[!.,!..]*', GLOB_BRACE);
+
+        if ($glob === false) {
+            return [];
+        }
+
+        // To get the appropriate files, we'll simply glob the directory and filter
+        // out any "files" that are not truly files so we do not end up with any
+        // directories in our list, but only true files within the directory.
+        return array_filter($glob, function ($file) {
+            return filetype($file) == 'file';
+        });
     }
 }
